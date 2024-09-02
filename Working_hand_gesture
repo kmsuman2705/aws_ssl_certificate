@@ -4,7 +4,6 @@ import os
 import time
 import cv2
 import boto3
-import webbrowser
 from cvzone.HandTrackingModule import HandDetector
 
 # Initialize AWS EC2 resource
@@ -35,6 +34,15 @@ try:
 except Exception as e:
     print(f"<p>An error occurred: {str(e)}</p>")
 
+def LaunchOS():
+    instances = ec2.create_instances(
+        ImageId="ami-0da59f1af71ea4ad2",
+        MinCount=1,
+        MaxCount=1,
+        InstanceType="t2.micro",
+    )
+    print("<p>OS launched.</p>")
+
 # Process the uploaded image
 detector = HandDetector(maxHands=1, detectionCon=0.7)
 img = cv2.imread(os.path.join(upload_dir, "myimage.png"))
@@ -54,20 +62,12 @@ else:
         lmlist = hand[0]
         if lmlist:
             fingerup = detector.fingersUp(lmlist)
-            finger_count = sum(fingerup)
-            print(f"<p>Detected fingers: {fingerup}</p>")
-
-            # Perform actions based on the number of fingers detected
-            if finger_count == 1:
-                print("<p>Opening YouTube...</p>")
-                webbrowser.open("https://www.youtube.com")
-            elif finger_count == 2:
-                print("<p>Opening LinkedIn...</p>")
-                webbrowser.open("https://www.linkedin.com")
-            elif finger_count == 3:
-                print("<p>Opening GitHub...</p>")
-                webbrowser.open("https://github.com")
+            if fingerup == [0, 1, 0, 0, 0]:
+                print("<p>Index finger detected.</p>")
+                LaunchOS()
+            elif fingerup == [0, 1, 1, 0, 0]:
+                print("<p>Index and middle finger detected.</p>")
             else:
-                print("<p>No specific action for this number of fingers.</p>")
+                print("<p>Work with index or middle finger.</p>")
     else:
         print("<p>No hand detected.</p>")
